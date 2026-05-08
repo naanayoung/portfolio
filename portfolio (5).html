@@ -136,7 +136,7 @@
   <div class="block">
     <p class="block-title">아키텍처 선택 — 트레이드오프</p>
     <div class="block-text">
-      <p>멀티 브로커 구성을 위해 AWS EC2 t3.medium(Ubuntu 22.04 LTS) 3대를 선택했습니다. 실제 네트워크 구간에서의 브로커 간 통신, 리더 재선출, ISR 변화를 관찰하려면 물리적으로 분리된 인스턴스가 필요했기 때문입니다.</p>
+      <p>멀티 브로커 구성을 위해 AWS EC2(t3.medium) 3대를 선택했습니다. 실제 네트워크 구간에서의 브로커 간 통신, 리더 재선출, ISR 변화를 관찰하려면 물리적으로 분리된 인스턴스가 필요했기 때문입니다.</p>
       <p>모니터링 스택은 처음에 Prometheus로 구성했다가 VictoriaMetrics로 전환했습니다. <strong>Prometheus 자체가 필요 이상으로 무거운 구성이었기에 수집(vmagent)과 저장(VictoriaMetrics)을 분리해 Prometheus 단일 구성보다 훨씬 가볍게 구성할 수 있다고 판단했습니다.</strong> vmagent가 Prometheus 스크래핑 설정을 그대로 사용할 수 있어 기존 exporter 생태계를 그대로 유지할 수 있다는 점도 함께 고려했습니다.</p>
     </div>
   </div>
@@ -166,7 +166,7 @@
       <p><strong>2. 분산 배치로 개선</strong><br>
       각 EC2에 브로커 1개 + 컨슈머 2개씩 균등 배치하고, 파티션 리더도 분산되도록 조정했습니다. 이후 동일 조건으로 부하 테스트를 재실행하자 특정 인스턴스의 CPU가 78% → 68%로 낮아졌고, 가장 부하가 높았던 컨테이너 기준으로는 약 47% 완화되었습니다.</p>
       <p><strong>3. 추가 병목 식별</strong><br>
-      분산 배치 이후에도 고부하 구간에서 latency spike가 남아 있었습니다. 쿼리 실행 로그를 분석한 결과 MySQL I/O 비용이 병목임을 확인했습니다. 메시지 처리마다 DB 쓰기가 발생하는 구조였기 때문에, 컨슈머 처리량이 늘어날수록 DB가 따라오지 못하는 상황이었습니다. 서비스 확장 시, DB 전용 EC2 분리를 개선 방안으로 정리했습니다.</p>
+      분산 배치 이후에도 최대 부하 구간에서 latency spike가 남아 있었습니다. 쿼리 실행 로그를 분석한 결과 MySQL I/O 비용이 병목임을 확인했습니다. 메시지 처리마다 DB 쓰기가 발생하는 구조였기 때문에, 컨슈머 처리량이 늘어날수록 DB가 따라오지 못하는 상황이었습니다. 서비스 확장 시, DB 전용 EC2 분리를 개선 방안으로 정리했습니다.</p>
     </div>
   </div>
 
@@ -308,7 +308,7 @@
       <li>SQS FIFO의 MessageGroupId를 seatId로, MessageDeduplicationId를 seatId+userId 조합으로 설정해 같은 좌석에 대한 요청은 순차 처리</li>
       <li>Request ID + DynamoDB 조건부 업데이트(ConditionExpression)로 재시도·중복 요청에도 멱등성 보장</li>
       <li>SQS Batch Size 1→5 조절 및 Lambda Reserved Concurrency 튜닝으로 트래픽 급증 구간 대기시간 단축</li>
-      <li>AWS CDK로 전체 인프라를 NetworkStack, ApplicationStack, DatabaseStack, MonitoringStack으로 분리해 IaC 구현</li>
+      <li>AWS CDK로 전체 인프라를 NetworkStack, ApplicationStack, DatabaseStack 등 6개 스택으로 분리해 IaC 구현</li>
       <li>CloudWatch Alarm(Lambda 에러·DynamoDB Throttle) + SNS 이메일 구독으로 운영 알람 구성</li>
     </ul>
     <div class="badge-row" style="margin-top:14px">
