@@ -107,6 +107,7 @@
   <div class="cover-links">
     <a href="https://github.com/naanayoung">GitHub</a>
     <a href="mailto:이메일">enayoung0802@gmail.com</a>
+    <a href="mailto:전화번호">010-0000-0000</a>
   </div>
 </div>
 
@@ -115,7 +116,7 @@
 <div class="section">
   <p class="section-idx">Project 01</p>
   <p class="section-title">Kafka 기반 분산 시스템 운영·관측·부하 검증</p>
-  <p class="section-sub">2025.05 – 2025.06 &nbsp;·&nbsp; 개인 프로젝트 &nbsp;·&nbsp; <a href="https://github.com/naanayoung/kafka-multi-broker" style="color:#2563eb;text-decoration:none;">github.com/naanayoung/kafka-multi-broker</a></p>
+  <p class="section-sub">2025.05 – 2025.06 &nbsp;·&nbsp; 개인 프로젝트 &nbsp;·&nbsp; <a href="https://github.com/naanayoung/kafka-multi-broker" style="color:#2563eb;text-decoration:none;">GitHub</a></p>
 
   <div class="proj-summary">
     지표 기반의 워크로드 분석으로 컨슈머·파티션 배치 불균형을 발견하고, 분산 배치를 통해 특정 인스턴스의 CPU 부하를 10% 완화했습니다. 브로커 장애 실험을 통해 메시지 손실 없는 서비스 지속 가능성을 직접 검증했습니다.
@@ -203,16 +204,20 @@
 
   <!--K8s 확장-->
   <div class="block">
-    <p class="block-title">구현 확장 - K8s 전환</p>
-    <div class="block-text">
-      <p>Docker Compose 기반 구성을 Kubernetes로 전환했습니다. Kafka 클러스터는 Strimzi Operator의 </p>
-      <p>Strimzi Operator를 사용해 K8s 전환 + GitHub Actions를 통해 자동화 파이프라인 구축</p>
+    <p class="block-title">구현 확장 - Kubernetes 전환 및 CI/CD 구성</p>
+    <ul class="plain">
+      <li>Docker Compose 기반 구성을 Kubernetes로 전환. Kafka 클러스터는 Strimzi Operator의 </li>
+      <li>애플리케이션 코드(Django, Producer, Consumer)는 수정하지 않고 인프라 설정만 변경. 서비스 간 통신 주소를 EC2 IP에서 K8s Service DNS로 교체하고, 환경변수를 COnfigMap으로 분리. </li>
+      <li>GitHub Actions로 CI 파이프라인 구성.</li>
+    </ul>
+    <div class="badge-row" style="margin-top:14px">
+      <span class="badge">Kubernetes</span><span class="badge">Strimzi</span><span class="badge">GitHub Actions</span><span class="badge">ghcr.io</span>
     </div>
   </div> 
 
   <!-- 배운 점 -->
   <div class="block">
-    <p class="block-title">한계 및 배운 점</p>
+    <p class="block-title">배운 점</p>
     <div class="insight">
       <div class="insight-item">
         <span class="insight-icon">→</span>
@@ -221,10 +226,6 @@
       <div class="insight-item">
         <span class="insight-icon">→</span>
         <p class="insight-text"><strong>비교 실험의 중요성.</strong> 성능 저하가 나타났을 때, 개선 전후를 동일 조건(180초, 15,000건)으로 재현할 수 있었기 때문에 어디서 무엇이 달라졌는지를 정확히 추적할 수 있었습니다. 조건이 같아야 수치를 신뢰할 수 있다는 것을 이 과정에서 체감했습니다.</p>
-      </div>
-      <div class="insight-item">
-        <span class="insight-icon">→</span>
-        <p class="insight-text"><strong>한계.</strong> 고부하 구간에서 식별한 MySQL I/O 병목은 시스템 확장 시 DB 워크로드 분리 구성을 개선 방향으로 정리해두었습니다.</p>
       </div>
     </div>
   </div>
@@ -235,7 +236,7 @@
 <div class="section">
   <p class="section-idx">Project 02</p>
   <p class="section-title">Serverless VPC 네트워크 설계와 비용 구조 비교 분석</p>
-  <p class="section-sub">2025.03 &nbsp;·&nbsp; 개인 프로젝트 &nbsp;·&nbsp; <a href="https://github.com/naanayoung/aws-event-reservation-system" style="color:#2563eb;text-decoration:none;">github.com/naanayoung/aws-event-reservation-system</a></p>
+  <p class="section-sub">2025.03 &nbsp;·&nbsp; 개인 프로젝트 &nbsp;·&nbsp; <a href="https://github.com/naanayoung/aws-event-reservation-system" style="color:#2563eb;text-decoration:none;">GitHub</a></p>
 
   <div class="proj-summary">
     서버리스 자원을 활용한 비동기 파이프라인을 설계하고, NAT Gateway와 VPC Endpoint 두 아키텍처의 비용 구조를 직접 비교 분석했습니다. AWS CDK로 IaC를 구현하고, VPC Endpoint 전환 시 최소 36% 비용 절감 시나리오를 도출했습니다.
@@ -284,7 +285,7 @@
   <div class="block">
     <p class="block-title">비용 분석 결과</p>
     <div class="block-text">
-      <p>AWS Pricing Calculator로 2-AZ 환경에서 월 100만 건 요청 기준으로 시뮬레이션했습니다.</p>
+      <p>AWS Pricing Calculator로 2-AZ 환경에서 월 30만 건 요청 기준으로 시뮬레이션했습니다.</p>
     </div>
     <div class="result-grid" style="margin-top: 12px; grid-template-columns: 1fr 1fr;">
       <div class="result-card">
@@ -292,12 +293,12 @@
         <div class="result-label">VPC Endpoint 전환 시<br>비용 절감</div>
       </div>
       <div class="result-card">
-        <div class="result-num">2-AZ</div>
-        <div class="result-label">고가용성 구성<br>기준</div>
+        <div class="result-num">2 vs 7</div>
+        <div class="result-label">NAT Gateway 개수<br>vs VPC Endpoint 개수</div>
       </div>
     </div>
     <div class="block-text" style="margin-top:12px">
-      <p>NAT Gateway는 AZ당 1개만 구성하면 되지만 시간당 고정 비용과 데이터 처리 단가가 높습니다. VPC Endpoint는 서비스별, AZ별로 구성해야돼 복잡해지지만, 데이터 처리 단가가 상대적으로 낮기 때문에 트래픽이 많을수록 NAT Gateway 대비 유리합니다.</p>
+      <p>NAT Gateway는 AZ당 1개씩 2개를 구성하면 되지만 시간당 고정 비용과 데이터 처리 단가가 높습니다. VPC Endpoint는 서비스별·AZ별로 7개를 구성해야 해 복잡하지만, 트래픽이 많을수록 NAT Gateway 대비 유리합니다.</p>
     </div>
   </div>
 
@@ -319,7 +320,7 @@
   </div>
       
   <div class="block">
-    <p class="block-title">한계 및 배운 점</p>
+    <p class="block-title">배운 점</p>
     <div class="insight">
       <div class="insight-item">
         <span class="insight-icon">→</span>
