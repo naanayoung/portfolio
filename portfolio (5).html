@@ -210,9 +210,10 @@
   <div class="block">
     <p class="block-title">구현 확장 - Kubernetes 전환 및 CI/CD 구성</p>
     <ul class="plain">
-      <li>Docker Compose 기반 구성을 Kubernetes로 전환. Kafka 클러스터는 Strimzi Operator의 </li>
-      <li>애플리케이션 코드(Django, Producer, Consumer)는 수정하지 않고 인프라 설정만 변경. 서비스 간 통신 주소를 EC2 IP에서 K8s Service DNS로 교체하고, 환경변수를 COnfigMap으로 분리. </li>
+      <li>Docker Compose 기반 구성을 Kubernetes로 전환. Kafka 클러스터는 Strimzi Operator의 Custom Resource(CR)로 선언해 StatefulSet·Service·PVC를 자동 생성. Bitnami 차트를 먼저 검토했지만 이미지가 유료로 전환되어 Strimzi로 교체.</li>
+      <li>애플리케이션 코드(Django, Producer, Consumer)는 수정하지 않고 인프라 설정만 변경. 서비스 간 통신 주소를 EC2 IP에서 K8s Service DNS로 교체하고, 환경변수를 ConfigMap으로 분리. </li>
       <li>GitHub Actions로 CI 파이프라인 구성.</li>
+      <li>GitHub Actions로 CI 파이프라인 구성. backend/ 경로 변경 시 자동으로 이미지 빌드해 ghcr.io에 push. latest 태그와 커밋 해시 태그 동시 부여.</li>
     </ul>
     <div class="badge-row" style="margin-top:14px">
       <span class="badge">Kubernetes</span><span class="badge">Strimzi</span><span class="badge">GitHub Actions</span><span class="badge">ghcr.io</span>
