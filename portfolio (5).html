@@ -137,7 +137,7 @@
     <p class="block-title">아키텍처 선택 — 트레이드오프</p>
     <div class="block-text">
       <p>멀티 브로커 구성을 위해 AWS EC2 t3.medium(Ubuntu 22.04 LTS) 3대를 선택했습니다. 실제 네트워크 구간에서의 브로커 간 통신, 리더 재선출, ISR 변화를 관찰하려면 물리적으로 분리된 인스턴스가 필요했기 때문입니다.</p>
-      <p>모니터링 스택은 처음에 Prometheus로 구성했다가 VictoriaMetrics로 전환했습니다. <strong>Prometheus 자체가 필요 이상으로 무거운 구성이었기에 경량 수집과 저장으로 역할을 분리한느 게 후러씬 가벼운 구성이라고 판단했습니다.</strong> vmagent가 Prometheus 스크래핑 설정을 그대로 사용할 수 있어 기존 exporter 생태계를 그대로 유지할 수 있다는 점도 함께 고려했습니다.</p>
+      <p>모니터링 스택은 처음에 Prometheus로 구성했다가 VictoriaMetrics로 전환했습니다. <strong>Prometheus 자체가 필요 이상으로 무거운 구성이었기에 수집(vmagent)과 저장(VictoriaMetrics)을 분리해 Prometheus 단일 구성보다 훨씬 가볍게 구성할 수 있다고 판단했습니다.</strong> vmagent가 Prometheus 스크래핑 설정을 그대로 사용할 수 있어 기존 exporter 생태계를 그대로 유지할 수 있다는 점도 함께 고려했습니다.</p>
     </div>
   </div>
 
@@ -203,8 +203,9 @@
 
   <!--K8s 확장-->
   <div class="block">
-    <p class="block-title">확장</p>
+    <p class="block-title">구현 확장 - K8s 전환</p>
     <div class="block-text">
+      <p>Docker Compose 기반 구성을 Kubernetes로 전환했습니다. Kafka 클러스터는 Strimzi Operator의 </p>
       <p>Strimzi Operator를 사용해 K8s 전환 + GitHub Actions를 통해 자동화 파이프라인 구축</p>
     </div>
   </div> 
