@@ -165,7 +165,7 @@
       <p><strong>1. 워크로드 편중 발견</strong><br>
       멀티 브로커로 전환한 뒤 동일 조건으로 부하 테스트를 재실행했는데, 물리 인프라를 늘렸음에도 지연시간이 오히려 약 9.4배 증가했습니다. 인프라를 확장했는데 성능이 떨어졌다는 점이 이상해 Grafana 대시보드를 점검했고, EC2 인스턴스 간 CPU 사용률 편차가 크다는 것을 발견했습니다. 특정 인스턴스가 78%까지 치솟는 동안 다른 인스턴스는 20% 수준에 머물렀습니다. 컨슈머 배치 현황을 확인하자 원인이 명확해졌습니다. 총 6개의 컨슈머 컨테이너가 모두 같은 EC2 인스턴스에 몰려 있었고, 파티션의 리더도 같은 브로커에 집중된 상태였습니다.</p>
       <p><strong>2. 분산 배치로 개선</strong><br>
-      각 EC2에 브로커 1개 + 컨슈머 2개씩 균등 배치하고, 파티션 리더도 분산되도록 조정했습니다. 이후 동일 조건으로 부하 테스트를 재실행하자 특정 인스턴스의 CPU가 78% → 68%로 낮아졌고, 가장 부하가 높았던 컨테이너 기준으로는 약 47% 완화되었습니다.</p>
+      각 EC2에 브로커 1개 + 컨슈머 2개씩 균등 배치하고, 파티션 리더도 분산되도록 조정했습니다. 이후 동일 조건으로 부하 테스트를 재실행하자 응답 지연이 2.06s에서 33.3ms로 단축됐고, 특정 인스턴스의 CPU가 78% → 68%로 낮아졌습니다. 가장 부하가 높았던 컨테이너 기준으로는 약 47% 완화되었습니다.</p>
       <p><strong>3. 추가 병목 식별</strong><br>
       분산 배치 이후에도 최대 부하 구간에서 응답 지연이 남아 있었습니다. 쿼리 실행 로그를 분석한 결과 MySQL I/O 비용이 병목임을 확인했습니다. 메시지 처리마다 DB 쓰기가 발생하는 구조였기 때문에, 컨슈머 처리량이 늘어날수록 DB가 따라오지 못하는 상황이었습니다. 서비스 확장 시, DB 전용 EC2 분리를 개선 방안으로 정리했습니다.</p>
     </div>
@@ -175,6 +175,10 @@
   <div class="block">
     <p class="block-title">측정 결과</p>
     <div class="result-grid">
+      <div class="result-card">
+        <div class="result-num">2.06s → 33ms</div>
+        <div class="result-label">분산 배치 후<br>응답 지연 단축</div>
+      </div>
       <div class="result-card">
         <div class="result-num">78% → 68%</div>
         <div class="result-label">피크 CPU 사용률<br>(특정 인스턴스)</div>
@@ -324,7 +328,7 @@
     <div class="insight">
       <div class="insight-item">
         <span class="insight-icon">→</span>
-        <p class="insight-text"><strong>설계 단계의 결정이 운영에 미치는 영향</strong> 하나의 선택이 운영 비용에 수십 퍼센트 차이를 만들 수 있다는 걸 수치로 직접 확인했습니다. </p>
+        <p class="insight-text"><strong>설계 단계의 결정이 운영에 미치는 영향.</strong> 하나의 선택이 운영 비용에 수십 퍼센트 차이를 만들 수 있다는 걸 수치로 직접 확인했습니다.</p>
       </div>
       <div class="insight-item">
         <span class="insight-icon">→</span>
