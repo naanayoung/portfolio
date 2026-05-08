@@ -137,7 +137,7 @@
     <p class="block-title">아키텍처 선택 — 트레이드오프</p>
     <div class="block-text">
       <p>멀티 브로커 구성을 위해 AWS EC2(t3.medium) 3대를 선택했습니다. 실제 네트워크 구간에서의 브로커 간 통신, 리더 재선출, ISR 변화를 관찰하려면 물리적으로 분리된 인스턴스가 필요했기 때문입니다.</p>
-      <p>모니터링 스택은 처음에 Prometheus로 구성했다가 VictoriaMetrics로 전환했습니다. <strong>Prometheus 자체가 필요 이상으로 무거운 구성이었기에 수집(vmagent)과 저장(VictoriaMetrics)을 분리해 Prometheus 단일 구성보다 훨씬 가볍게 구성할 수 있다고 판단했습니다.</strong> vmagent가 Prometheus 스크래핑 설정을 그대로 사용할 수 있어 기존 exporter 생태계를 그대로 유지할 수 있다는 점도 함께 고려했습니다.</p>
+      <p>모니터링 스택은 처음에 Prometheus로 구성했다가 VictoriaMetrics로 전환했습니다. Prometheus는 여러 기능을 단일 프로세스에서 처리하는 구조라, 필요한 기능에 비해 과하게 무거웠습니다. 수집은 vmagent, 저장은 VictoriaMetrics로 역할을 분리해 Prometheus 단일 구성보다 훨씬 가볍게 구성할 수 있다고 판단했습니다. vmagent가 Prometheus 스크래핑 설정을 그대로 사용할 수 있어 기존 exporter 생태계를 그대로 유지할 수 있다는 점도 함께 고려했습니다.</p>
     </div>
   </div>
 
@@ -145,9 +145,9 @@
   <div class="block">
     <p class="block-title">구현 내용</p>
     <ul class="plain">
-      <li>EC2 3대에 Docker Compose로 Kafka 멀티 브로커 클러스터 구축. 각 브로커에 kafka-exporter, cAdvisor 배포</li>
-      <li>vmagent가 각 노드의 지표를 수집해 VictoriaMetrics로 전달, Grafana에서 Lag·RPS·p95 Latency·노드별 CPU·컨테이너 리소스를 단일 대시보드로 통합</li>
-      <li><strong>Django 기반 쿠폰 발급 시스템을 Producer로</strong>, consumer 컨테이너 총 6개를 각 EC2에 2개씩 배치해 실제 분산 메시지 처리 흐름 재현</li>
+      <li>EC2 3대에 Docker Compose로 Kafka 멀티 브로커 클러스터 구축. 각 노드에 kafka-exporter, cAdvisor 배포</li>
+      <li>vmagent가 각 노드의 지표를 수집해 VictoriaMetrics로 전달, Grafana에서 Lag·Latency·컨테이너 리소스를 단일 대시보드로 통합</li>
+      <li>쿠폰 발급 요청을 받은 Django API 서버가 Kafka에 메시지를 전송하고, 컨슈머 컨테이너 6개가 각 EC2에 2개씩 분산 배치되어 메시지 처리 흐름 재현</li>
       <li>k6로 5,000 / 10,000 / 15,000 / 18,000건 단계별 부하 테스트 진행. 싱글 브로커 → 멀티 브로커 전환 전후를 동일 조건(180초, 15,000건)에서 비교해 수치로 검증</li>
     </ul>
     <div class="badge-row" style="margin-top:14px">
@@ -166,7 +166,7 @@
       <p><strong>2. 분산 배치로 개선</strong><br>
       각 EC2에 브로커 1개 + 컨슈머 2개씩 균등 배치하고, 파티션 리더도 분산되도록 조정했습니다. 이후 동일 조건으로 부하 테스트를 재실행하자 특정 인스턴스의 CPU가 78% → 68%로 낮아졌고, 가장 부하가 높았던 컨테이너 기준으로는 약 47% 완화되었습니다.</p>
       <p><strong>3. 추가 병목 식별</strong><br>
-      분산 배치 이후에도 최대 부하 구간에서 latency spike가 남아 있었습니다. 쿼리 실행 로그를 분석한 결과 MySQL I/O 비용이 병목임을 확인했습니다. 메시지 처리마다 DB 쓰기가 발생하는 구조였기 때문에, 컨슈머 처리량이 늘어날수록 DB가 따라오지 못하는 상황이었습니다. 서비스 확장 시, DB 전용 EC2 분리를 개선 방안으로 정리했습니다.</p>
+      분산 배치 이후에도 최대 부하 구간에서 응답 지연이 남아 있었습니다. 쿼리 실행 로그를 분석한 결과 MySQL I/O 비용이 병목임을 확인했습니다. 메시지 처리마다 DB 쓰기가 발생하는 구조였기 때문에, 컨슈머 처리량이 늘어날수록 DB가 따라오지 못하는 상황이었습니다. 서비스 확장 시, DB 전용 EC2 분리를 개선 방안으로 정리했습니다.</p>
     </div>
   </div>
 
@@ -210,7 +210,7 @@
     </div>
   </div> 
 
-  <!-- 한계 및 배운 점 -->
+  <!-- 배운 점 -->
   <div class="block">
     <p class="block-title">한계 및 배운 점</p>
     <div class="insight">
@@ -220,7 +220,7 @@
       </div>
       <div class="insight-item">
         <span class="insight-icon">→</span>
-        <p class="insight-text"><strong>비교 실험의 중요성.</strong> 개선 전후를 동일 조건(180초, 15,000건)으로 재현해야 수치를 신뢰할 수 있습니다.</p>
+        <p class="insight-text"><strong>비교 실험의 중요성.</strong> 성능 저하가 나타났을 때, 개선 전후를 동일 조건(180초, 15,000건)으로 재현할 수 있었기 때문에 어디서 무엇이 달라졌는지를 정확히 추적할 수 있었습니다. 조건이 같아야 수치를 신뢰할 수 있다는 것을 이 과정에서 체감했습니다.</p>
       </div>
       <div class="insight-item">
         <span class="insight-icon">→</span>
@@ -246,7 +246,7 @@
   <div class="block">
     <p class="block-title">배경 및 목표</p>
     <div class="block-text">
-      <p>이벤트 예약 시스템은 특정 시간대에 트래픽이 집중되는 특성이 있습니다. 서버를 상시 운영하면 대기 비용이 발생하고, 트래픽 급증 시 가용성을 보장하기 어렵습니다. 이 문제를 해결하기 위해 트래픽에 따라 자동 확장되는 서버리스 자원을 선택했습니다. 설계 과정에서 Lambda가 AWS 관리형 서비스에 접근하는 방법 중, NAT Gateway와 VPC Endpoint의 비용 구조 차이를 실제 수치로 비교해보고 싶었습니다.</p>
+      <p>이벤트 예약 시스템은 특정 시간대에 트래픽이 집중되는 특성이 있습니다. 서버를 상시 운영하면 대기 비용이 발생하고, 트래픽 급증 시 가용성을 보장하기 어렵습니다. 이 문제를 해결하기 위해 트래픽에 따라 자동 확장되는 서버리스 자원을 선택했습니다. 설계 과정에서 Private Subnet에 배치한 Lambda가 AWS 관리형 서비스에 접근하는 경로로 NAT Gateway와 VPC Endpoint 두 가지를 검토했고, 두 방법의 비용 구조 차이를 실제 수치로 비교해보고 싶었습니다.</p>
     </div>
   </div>
 
@@ -268,8 +268,8 @@
       <div class="compare-box selected">
         <p class="compare-box-title">Option B — VPC Endpoint ✓ 선택</p>
         <ul>
+          <li>서비스별·AZ별 Endpoint 구성 필요</li>
           <li>AWS 내부 망 경유, 인터넷 미경유</li>
-          <li><strong>서비스별 Interface Endpoint 필요</strong></li>
           <li>AZ당 고정 비용 + 데이터 처리 비용 발생</li>
           <li>트래픽이 많을수록 절감 폭이 커짐</li>
         </ul>
@@ -297,7 +297,7 @@
       </div>
     </div>
     <div class="block-text" style="margin-top:12px">
-      <p><strong>NAT GW는 2개(AZ당 1개)만 구축하면 되지만 시간당 고정 비용이 별도로 붙습니다. VPC Endpoint는 각 서비스별, AZ별 ENI가 필요해 구축이 번거롭지만, 데이터 처리 비용이 상대적으로 저렴하기 때문에 트래픽이 많을수록 NAT GW 대비 유리해집니다.</strong></p>
+      <p>NAT Gateway는 AZ당 1개만 구성하면 되지만 시간당 고정 비용과 데이터 처리 단가가 높습니다. VPC Endpoint는 서비스별, AZ별로 구성해야돼 복잡해지지만, 데이터 처리 단가가 상대적으로 낮기 때문에 트래픽이 많을수록 NAT Gateway 대비 유리합니다.</p>
     </div>
   </div>
 
@@ -305,11 +305,11 @@
     <p class="block-title">구현 — 파이프라인 및 안정성</p>
     <ul class="plain">
       <li>API Gateway → Lambda(예약 요청) → SQS FIFO → Lambda(예약 처리) → DynamoDB 비동기 파이프라인. Lambda 처리 실패 시 SQS 자동 재전달로 안정성 확보</li>
-      <li>SQS FIFO의 MessageGroupId를 seatId로, MessageDeduplicationId를 seatId+userId 조합으로 설정해 같은 좌석에 대한 요청은 순차 처리</li>
-      <li>Request ID + DynamoDB 조건부 업데이트(ConditionExpression)로 재시도·중복 요청에도 멱등성 보장</li>
-      <li>SQS Batch Size 1→5 조절 및 Lambda Reserved Concurrency 튜닝으로 트래픽 급증 구간 대기시간 단축</li>
+      <li>SQS FIFO에서 좌석 기준으로 메시지 그룹을 분리해 동일 좌석의 요청을 순차 처리</li>
+      <li>Request ID + DynamoDB 조건부 업데이트로 재시도·중복 요청에도 멱등성 보장</li>
+      <li>SQS Batch Size 1→5 조절 및 Lambda Reserved Concurrency로 트래픽 급증 구간 대기시간 단축</li>
       <li>AWS CDK로 전체 인프라를 NetworkStack, ApplicationStack, DatabaseStack 등 6개 스택으로 분리해 IaC 구현</li>
-      <li>CloudWatch Alarm(Lambda 에러·DynamoDB Throttle) + SNS 이메일 구독으로 운영 알람 구성</li>
+      <li>CloudWatch Alarm과 SNS 이메일 구독으로 운영 알람 구성</li>
     </ul>
     <div class="badge-row" style="margin-top:14px">
       <span class="badge">AWS Lambda</span><span class="badge">API Gateway</span><span class="badge">SQS</span>
@@ -323,7 +323,7 @@
     <div class="insight">
       <div class="insight-item">
         <span class="insight-icon">→</span>
-        <p class="insight-text"><strong>아키텍처 선택은 비용 문제이기도 하다.</strong> 기능 구현보다 어떤 네트워크 경로를 쓰느냐에 따라 운영 비용이 수십 퍼센트 달라질 수 있습니다. 설계 단계에서 비용 구조를 함께 고려하는 습관이 중요하다는 것을 배웠습니다.</p>
+        <p class="insight-text"><strong>설계 단계의 결정이 운영에 미치는 영향</strong> 하나의 선택이 운영 비용에 수십 퍼센트 차이를 만들 수 있다는 걸 수치로 직접 확인했습니다. </p>
       </div>
       <div class="insight-item">
         <span class="insight-icon">→</span>
