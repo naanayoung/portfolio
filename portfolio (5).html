@@ -107,7 +107,7 @@
   <div class="cover-links">
     <a href="https://github.com/naanayoung">GitHub</a>
     <a href="mailto:이메일">enayoung0802@gmail.com</a>
-    <a href="mailto:전화번호">010-0000-0000</a>
+    <a href="tel:010-0000-0000">전화번호</a>
   </div>
 </div>
 
@@ -137,8 +137,9 @@
   <div class="block">
     <p class="block-title">아키텍처 선택 — 트레이드오프</p>
     <div class="block-text">
-      <p>멀티 브로커 구성을 위해 AWS EC2(t3.medium) 3대를 선택했습니다. 실제 네트워크 구간에서의 브로커 간 통신, 리더 재선출, ISR 변화를 관찰하려면 물리적으로 분리된 인스턴스가 필요했기 때문입니다.</p>
-      <p>모니터링 스택은 처음에 Prometheus로 구성했다가 VictoriaMetrics로 전환했습니다. Prometheus는 여러 기능을 단일 프로세스에서 처리하는 구조라, 필요한 기능에 비해 과하게 무거웠습니다. 수집은 vmagent, 저장은 VictoriaMetrics로 역할을 분리해 Prometheus 단일 구성보다 훨씬 가볍게 구성할 수 있다고 판단했습니다. vmagent가 Prometheus 스크래핑 설정을 그대로 사용할 수 있어 기존 exporter 생태계를 그대로 유지할 수 있다는 점도 함께 고려했습니다.</p>
+      <p>멀티 브로커 구성을 위해 AWS EC2(t3.medium) 3대를 선택했습니다. 브로커 간 통신, 리더 재선출, ISR 변화를 더 실제 운영 환경에 가깝게 관찰하기 위해 서로 다른 EC2 인스턴스에 브로커를 분산 배치했습니다.</p>
+      <p>모니터링 스택은 처음에 Prometheus로 구성했다가 VictoriaMetrics로 전환했습니다. 초기에는 Prometheus로 지표를 수집했지만, 는 여러 기능을 단일 프로세스에서 처리하는 구조라, 필요한 기능에 비해 과하게 무거웠습니다. 수집은 vmagent, 저장은 VictoriaMetrics로 역할을 분리해 Prometheus 단일 구성보다 훨씬 가볍게 구성할 수 있다고 판단했습니다. vmagent가 Prometheus 스크래핑 설정을 그대로 사용할 수 있어 기존 exporter 생태계를 그대로 유지할 수 있다는 점도 함께 고려했습니다.</p>
+      <p>모니터링 스택은 처음에 Prometheus로 구성했다가 VictoriaMetrics로 전환했습니다. 초기에는 Prometheus로 지표를 수집했지만, 이 프로젝트에서는 장기 저장보다 경량 수집과 원격 저장 구조가 더 중요했습니다. 그래서 수집은 vmagent, 저장은 VictoriaMetrics로 분리해 Prometheus 단일 구성보다 훨씬 가볍게 구성할 수 있다고 판단했습니다. vmagent가 Prometheus 스크래핑 설정을 그대로 사용할 수 있어 기존 exporter 생태계를 그대로 유지할 수 있다는 점도 함께 고려했습니다.</p>
     </div>
   </div>
 
@@ -165,7 +166,7 @@
       <p><strong>1. 워크로드 편중 발견</strong><br>
       멀티 브로커로 전환한 뒤 동일 조건으로 부하 테스트를 재실행했는데, 물리 인프라를 늘렸음에도 지연시간이 오히려 약 9.4배 증가했습니다. 인프라를 확장했는데 성능이 떨어졌다는 점이 이상해 Grafana 대시보드를 점검했고, EC2 인스턴스 간 CPU 사용률 편차가 크다는 것을 발견했습니다. 특정 인스턴스가 78%까지 치솟는 동안 다른 인스턴스는 20% 수준에 머물렀습니다. 컨슈머 배치 현황을 확인하자 원인이 명확해졌습니다. 총 6개의 컨슈머 컨테이너가 모두 같은 EC2 인스턴스에 몰려 있었고, 파티션의 리더도 같은 브로커에 집중된 상태였습니다.</p>
       <p><strong>2. 분산 배치로 개선</strong><br>
-      각 EC2에 브로커 1개 + 컨슈머 2개씩 균등 배치하고, 파티션 리더도 분산되도록 조정했습니다. 이후 동일 조건으로 부하 테스트를 재실행하자 응답 지연이 2.06s에서 33.3ms로 단축됐고, 특정 인스턴스의 CPU가 78% → 68%로 낮아졌습니다. 가장 부하가 높았던 컨테이너 기준으로는 약 47% 완화되었습니다.</p>
+      각 EC2에 브로커 1개 + 컨슈머 2개씩 균등 배치하고, 파티션 리더도 분산되도록 조정했습니다. 이후 동일 조건으로 부하 테스트를 재실행하자 응답 지연(p95)이 2.06s에서 33.3ms로 단축됐고, 피크 CPU 사용률이 78% → 68%로 낮아졌습니다. 가장 부하가 높았던 컨테이너 기준으로는 약 47% 완화되었습니다.</p>
       <p><strong>3. 추가 병목 식별</strong><br>
       분산 배치 이후에도 최대 부하 구간에서 응답 지연이 남아 있었습니다. 쿼리 실행 로그를 분석한 결과 MySQL I/O 비용이 병목임을 확인했습니다. 메시지 처리마다 DB 쓰기가 발생하는 구조였기 때문에, 컨슈머 처리량이 늘어날수록 DB가 따라오지 못하는 상황이었습니다. 서비스 확장 시, DB 전용 EC2 분리를 개선 방안으로 정리했습니다.</p>
     </div>
@@ -177,15 +178,7 @@
     <div class="result-grid">
       <div class="result-card">
         <div class="result-num">2.06s → 33ms</div>
-        <div class="result-label">분산 배치 후<br>응답 지연 단축</div>
-      </div>
-      <div class="result-card">
-        <div class="result-num">78% → 68%</div>
-        <div class="result-label">피크 CPU 사용률<br>(특정 인스턴스)</div>
-      </div>
-      <div class="result-card">
-        <div class="result-num">약 47%</div>
-        <div class="result-label">최대 부하 컨테이너<br>부하 완화</div>
+        <div class="result-label">분산 배치 후<br>p95 응답 지연 단축</div>
       </div>
       <div class="result-card">
         <div class="result-num">손실 0</div>
@@ -202,7 +195,7 @@
   <div class="block">
     <p class="block-title">장애 내성 검증</p>
     <div class="block-text">
-      <p>부하 테스트 중 브로커 1대를 강제 종료해 장애 상황을 재현했습니다. 리더 재선출 과정과 ISR(In-Sync Replica) 변화를 실시간으로 관찰했고, 메시지 손실 없이 서비스가 지속됨을 확인했습니다. 이 과정에서 acks=all, replication.factor=3, min.insync.replicas=2 설정이 실제로 어떻게 동작하는지 체감할 수 있었습니다.</p>
+      <p>부하 테스트 중 브로커 1대를 강제 종료해 장애 상황을 재현했습니다. 리더 재선출 과정과 ISR(In-Sync Replica) 변화를 실시간으로 관찰했고, 메시지 손실 없이 서비스가 지속됨을 확인했습니다. 테스트 전후 producer 발행 건수와 consumer 처리 완료 건수, DB 저장 건수를 비표해 누락 여부를 확인했습니다. 이 과정에서 acks=all, replication.factor=3, min.insync.replicas=2 설정이 실제로 어떻게 동작하는지 체감할 수 있었습니다.</p>
     </div>
   </div>
 
@@ -259,7 +252,7 @@
   <div class="block">
     <p class="block-title">아키텍처 설계 — 트레이드오프</p>
     <div class="block-text">
-      <p>Lambda를 Public Subnet에 배치하는 방법도 있었지만, 보안 측면에서 Private Subnet 배치를 선택했습니다. 이 경우 Lambda가 SQS·SNS·DynamoDB 같은 AWS 관리형 서비스에 접근하려면 외부로 나가는 경로가 필요합니다.</p>
+      <p>Lambda는 Private Subnet 배치를 선택했습니다. 이 경우 Lambda가 SQS·SNS·DynamoDB 같은 AWS 관리형 서비스에 접근하려면 외부로 나가는 경로가 필요합니다.</p>
     </div>
     <div class="compare" style="margin-top:12px">
       <div class="compare-box">
@@ -290,7 +283,7 @@
   <div class="block">
     <p class="block-title">비용 분석 결과</p>
     <div class="block-text">
-      <p>AWS Pricing Calculator로 2-AZ 환경에서 월 30만 건 요청 기준으로 시뮬레이션했습니다.</p>
+      <p>AWS Pricing Calculator로 2-AZ 환경에서 월 30만 건 요청, SQS/SNS/CloudWatch/DynamoDB 접근 기준으로 시뮬레이션했습니다.</p>
     </div>
     <div class="result-grid" style="margin-top: 12px; grid-template-columns: 1fr 1fr;">
       <div class="result-card">
@@ -299,11 +292,12 @@
       </div>
       <div class="result-card">
         <div class="result-num">2 vs 7</div>
-        <div class="result-label">NAT Gateway 개수<br>vs VPC Endpoint 개수</div>
+        <div class="result-label">NAT Gateway 개수<br>vs VPC Endpoint 개수<br>Interface Endpoint 6개, Gateway Endpoint 1개</div>
       </div>
     </div>
     <div class="block-text" style="margin-top:12px">
-      <p>NAT Gateway는 AZ당 1개씩 2개를 구성하면 되지만 시간당 고정 비용과 데이터 처리 단가가 높습니다. VPC Endpoint는 서비스별·AZ별로 7개를 구성해야 해 복잡하지만, 트래픽이 많을수록 NAT Gateway 대비 유리합니다.</p>
+      <p>NAT Gateway는 AZ당 1개씩 2개를 구성하면 되지만 VPC Endpoint는 Interface Endpoint 6개, Gateway Endpoint 1개로 총 7개를 구성해야 해 복잡합니다. 하지만 NAT Gateway의 고정 비용과 데이터 처리 비용이 더 크게 작용하기 때문에 VPC Endpoing 구성으로 전환할 경우 약 36% 이상의 비용 절감이 가능합니다. 또한 해당 조건에서는 트래픽이 많을수록 절감 폭이 커집니다.</p>
+      <p>NAT Gateway는 AZ당 1개씩 2개를 구성하면 되지만 시간당 고정 비용과 데이터 처리 단가가 높습니다. VPC Endpoint는 Interface Endpoint 6개, Gateway Endpoint 1개로 총 7개를 구성해야 해 복잡하지만, 트래픽이 많을수록 NAT Gateway 대비 유리합니다.</p>
     </div>
   </div>
 
