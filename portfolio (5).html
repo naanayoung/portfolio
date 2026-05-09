@@ -97,7 +97,7 @@
 <!-- ══════════════ COVER ══════════════ -->
 <div class="cover">
   <p class="cover-label">Portfolio</p>
-  <p class="cover-name">이름</p>
+  <p class="cover-name">이나영</p>
   <p class="cover-role">Cloud / Infrastructure / DevOps Engineer</p>
   <p class="cover-desc">
     인프라를 단순히 구축하는 데 그치지 않고, 지표를 수집하고 분석해 문제를 스스로 찾아내는 엔지니어를 지향합니다.<br>
@@ -106,7 +106,7 @@
   </p>
   <div class="cover-links">
     <a href="https://github.com/naanayoung">GitHub</a>
-    <a href="mailto:이메일">enayoung0802@gmail.com</a>
+    <a href="mailto:enayoung0802@gmail.com">enayoung0802@gmail.com</a>
     <a href="tel:01000000000">010-0000-0000</a>
   </div>
 </div>
@@ -148,7 +148,7 @@
     <ul class="plain">
       <li>EC2 3대에 Docker Compose로 Kafka 멀티 브로커 클러스터 구축. 각 노드에 kafka-exporter, cAdvisor 배포</li>
       <li>vmagent가 각 노드의 지표를 수집해 VictoriaMetrics로 전달, Grafana에서 Lag·Latency·컨테이너 리소스를 단일 대시보드로 통합</li>
-      <li>쿠폰 발급 요청을 받은 Django API 서버가 Kafka에 메시지를 전송하고, 컨슈머 컨테이너 6개가 각 EC2에 2개씩 분산 배치되어 메시지 처리 흐름 재현</li>
+      <li>쿠폰 발급 요청을 받은 Django API 서버가 Kafka에 메시지를 전송하고, 컨슈머 컨테이너 6개가 각 EC2에 2개씩 분산 배치되어 메시지 처리 흐름 재현(최종 구조 기)</li>
       <li>k6로 5,000 / 10,000 / 15,000 / 18,000건 단계별 부하 테스트 진행. 싱글 브로커 → 멀티 브로커 전환 전후를 동일 조건(180초, 15,000건)에서 비교해 수치로 검증</li>
     </ul>
     <div class="badge-row" style="margin-top:14px">
@@ -163,7 +163,7 @@
     <p class="block-title">문제 발견 → 분석 → 개선</p>
     <div class="block-text">
       <p><strong>1. 워크로드 편중 발견</strong><br>
-      멀티 브로커로 전환한 뒤 동일 조건으로 부하 테스트를 재실행했는데, 물리 인프라를 늘렸음에도 지연시간이 오히려 약 9.4배 증가했습니다. 인프라를 확장했는데 성능이 떨어졌다는 점이 이상해 Grafana 대시보드를 점검했고, EC2 인스턴스 간 CPU 사용률 편차가 크다는 것을 발견했습니다. 특정 인스턴스가 78%까지 치솟는 동안 다른 인스턴스는 20% 수준에 머물렀습니다. 컨슈머 배치 현황을 확인하자 원인이 명확해졌습니다. 총 6개의 컨슈머 컨테이너가 모두 같은 EC2 인스턴스에 몰려 있었고, 파티션의 리더도 같은 브로커에 집중된 상태였습니다.</p>
+      멀티 브로커로 전환한 뒤 동일 조건으로 부하 테스트를 재실행했는데, 인프라를 확장했음에도 p95 응답 지연이 오히려 약 9.4배 증가했습니다. 자원과 처리 주체를 늘렸는데도 성능이 떨어졌다는 점이 이상해 Grafana 대시보드를 점검했고, EC2 인스턴스 간 CPU 사용률 편차가 크다는 것을 발견했습니다. 특정 인스턴스가 78%까지 치솟는 동안 다른 인스턴스는 20% 수준에 머물렀습니다. 컨슈머 배치 현황을 확인하자 원인이 명확해졌습니다. 총 6개의 컨슈머 컨테이너가 모두 같은 EC2 인스턴스에 몰려 있었고, 파티션의 리더도 같은 브로커에 집중된 상태였습니다.</p>
       <p><strong>2. 분산 배치로 개선</strong><br>
       각 EC2에 브로커 1개 + 컨슈머 2개씩 균등 배치하고, 파티션 리더도 분산되도록 조정했습니다. 이후 동일 조건으로 부하 테스트를 재실행하자 응답 지연(p95)이 2.06s에서 33.3ms로 단축됐고, 피크 CPU 사용률이 78% → 68%로 낮아졌습니다. 가장 부하가 높았던 컨테이너 기준으로는 약 47% 완화되었습니다.</p>
       <p><strong>3. 추가 병목 식별</strong><br>
@@ -176,7 +176,7 @@
     <p class="block-title">측정 결과</p>
     <div class="result-grid">
       <div class="result-card">
-        <div class="result-num">2.06s → 33ms</div>
+        <div class="result-num">2.06s → 33.3ms</div>
         <div class="result-label">p95 응답 지연 단축</div>
       </div>
       <div class="result-card">
@@ -210,19 +210,19 @@
   <div class="block">
     <p class="block-title">구현 확장 - Kubernetes 전환 및 CI/CD 구성</p>
     <ul class="plain">
-      <li>Docker Compose 기반 구성을 Kubernetes로 전환. Kafka 클러스터는 Strimzi Operator의 Custom Resource(CR)로 선언해 StatefulSet·Service·PVC를 자동 생성. Bitnami 차트를 먼저 검토했지만 이미지가 유료로 전환되어 Strimzi로 교체.</li>
-      <li>애플리케이션 코드(Django, Producer, Consumer)는 수정하지 않고 인프라 설정만 변경. 서비스 간 통신 주소를 EC2 IP에서 K8s Service DNS로 교체하고, 환경변수를 ConfigMap으로 분리. </li>
-      <li>GitHub Actions로 CI 파이프라인 구성.</li>
-      <li>GitHub Actions로 CI 파이프라인 구성. backend/ 경로 변경 시 자동으로 이미지 빌드해 ghcr.io에 push. latest 태그와 커밋 해시 태그 동시 부여.</li>
+      <li>Docker Compose 기반 구성을 Kubernetes로 전환. Kafka 클러스터는 Strimzi Operator의 Custom Resource로 선언해 StatefulSet·Service·PVC 생성 자동화.</li>
+      <li>애플리케이션 코드는 수정하지 않고 서비스 간 통신 주소를 EC2 IP에서 Kubernetes Service DNS로 변경하고, 환경변수를 ConfigMap으로 분리. </li>
+      <li>GitHub Actions로 main 브랜치 push 시 Docker 이미지를 빌드해 GHCR에 push. 커밋 해시 기반 이미지 태그를 Kubernetes manifest에 반영하도록 구성.</li>
+      <li>kubectl apply와 rollout status 확인을 자동화해 코드 변경부터 컨테이너 이미지 갱신, Kubernetes 배포 반영까지 이어지는 배포 흐름 재현.</li>
     </ul>
     <div class="badge-row" style="margin-top:14px">
-      <span class="badge">Kubernetes</span><span class="badge">Strimzi</span><span class="badge">GitHub Actions</span><span class="badge">ghcr.io</span>
+      <span class="badge">Kubernetes</span><span class="badge">Strimzi</span><span class="badge">GitHub Actions</span><span class="badge">kubectl</span>
     </div>
   </div> 
 
-  <!-- 배운 점 -->
+  <!-- 정리 -->
   <div class="block">
-    <p class="block-title">배운 점</p>
+    <p class="block-title">정리</p>
     <div class="insight">
       <div class="insight-item">
         <span class="insight-icon">→</span>
@@ -230,7 +230,7 @@
       </div>
       <div class="insight-item">
         <span class="insight-icon">→</span>
-        <p class="insight-text"><strong>비교 실험의 중요성.</strong> 성능 저하가 나타났을 때, 개선 전후를 동일 조건(180초, 15,000건)으로 재현할 수 있었기 때문에 어디서 무엇이 달라졌는지를 정확히 추적할 수 있었습니다. 조건이 같아야 수치를 신뢰할 수 있다는 것을 이 과정에서 체감했습니다.</p>
+        <p class="insight-text"><strong>측정 방식.</strong>  ㅇㅇ</p>
       </div>
     </div>
   </div>
@@ -259,7 +259,7 @@
   <div class="block">
     <p class="block-title">아키텍처 설계 — 트레이드오프</p>
     <div class="block-text">
-      <p>Lambda는 Private Subnet 배치를 선택했습니다. 이 경우 Lambda가 SQS·SNS·DynamoDB 같은 AWS 관리형 서비스에 접근하기 위한 네트워크 경로가 필요합니다. NAT Gateway를 통한 아웃바운드 경로와 VPC Endpoint를 통한 사설 연결 방식을 비교했습니다.</p>
+      <p>Lambda는 Private Subnet 배치를 선택했습니다. 이 경우 Lambda가 SQS·SNS·DynamoDB 같은 AWS 관리형 서비스에 접근하기 위한 네트워크 경로가 필요합니다. NAT Gateway를 통한 아웃바운드 경로와 VPC Endpoint를 통한 프라이빗 연결 경로를 비교했습니다.</p>
     </div>
     <div class="compare" style="margin-top:12px">
       <div class="compare-box">
@@ -299,11 +299,11 @@
       </div>
       <div class="result-card">
         <div class="result-num">2 vs 7</div>
-        <div class="result-label">NAT Gateway 개수<br>vs VPC Endpoint 개수<br>Interface Endpoint 6개, Gateway Endpoint 1개</div>
+        <div class="result-label">NAT Gateway 개수<br>vs VPC Endpoint 개수</div>
       </div>
     </div>
     <div class="block-text" style="margin-top:12px">
-      <p>NAT Gateway는 AZ당 1개씩 2개를 구성하면 되지만 VPC Endpoint는 Interface Endpoint 6개, Gateway Endpoint 1개로 총 7개를 구성해야 해 복잡합니다. 하지만 NAT Gateway의 고정 비용과 데이터 처리 비용이 더 크게 작용하기 때문에 VPC Endpoing 구성으로 전환할 경우 약 36% 이상의 비용 절감이 가능합니다. 또한 해당 조건에서는 트래픽이 많을수록 절감 폭이 커집니다.</p>
+      <p>NAT Gateway는 2개만 구성하면 되지만 데이터 처리 비용이 상대적으로 높습니다. VPC Endpoint는 총 7개를 구성해야해 구축이 번거롭지만, 데이터 처리 비용이 저렴하기 때문에 약 36%의 비용 절감이 가능합니다. 또한 해당 조건에서는 트래픽이 많을수록 VPC Endpoint 구성의 절감 폭이 커집니다.</p>
     </div>
   </div>
 
@@ -325,7 +325,7 @@
   </div>
       
   <div class="block">
-    <p class="block-title">배운 점</p>
+    <p class="block-title">정리</p>
     <div class="insight">
       <div class="insight-item">
         <span class="insight-icon">→</span>
