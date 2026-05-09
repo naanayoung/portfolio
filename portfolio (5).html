@@ -57,7 +57,7 @@
   ul.plain li::before { content: "—"; position: absolute; left: 0; color: #ccc; }
 
   /* ── 결과 카드 ── */
-  .result-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+  .result-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px; }
   .result-card { background: #f8f8f8; border-radius: 8px; padding: 16px; text-align: center; }
   .result-num { font-size: 22px; font-weight: 700; color: #1a1a1a; letter-spacing: -0.5px; }
   .result-label { font-size: 11px; color: #888; margin-top: 4px; line-height: 1.5; }
@@ -107,7 +107,7 @@
   <div class="cover-links">
     <a href="https://github.com/naanayoung">GitHub</a>
     <a href="mailto:이메일">enayoung0802@gmail.com</a>
-    <a href="tel:010-0000-0000">전화번호</a>
+    <a href="tel:01000000000">010-0000-0000</a>
   </div>
 </div>
 
@@ -138,8 +138,7 @@
     <p class="block-title">아키텍처 선택 — 트레이드오프</p>
     <div class="block-text">
       <p>멀티 브로커 구성을 위해 AWS EC2(t3.medium) 3대를 선택했습니다. 브로커 간 통신, 리더 재선출, ISR 변화를 더 실제 운영 환경에 가깝게 관찰하기 위해 서로 다른 EC2 인스턴스에 브로커를 분산 배치했습니다.</p>
-      <p>모니터링 스택은 처음에 Prometheus로 구성했다가 VictoriaMetrics로 전환했습니다. 초기에는 Prometheus로 지표를 수집했지만, 는 여러 기능을 단일 프로세스에서 처리하는 구조라, 필요한 기능에 비해 과하게 무거웠습니다. 수집은 vmagent, 저장은 VictoriaMetrics로 역할을 분리해 Prometheus 단일 구성보다 훨씬 가볍게 구성할 수 있다고 판단했습니다. vmagent가 Prometheus 스크래핑 설정을 그대로 사용할 수 있어 기존 exporter 생태계를 그대로 유지할 수 있다는 점도 함께 고려했습니다.</p>
-      <p>모니터링 스택은 처음에 Prometheus로 구성했다가 VictoriaMetrics로 전환했습니다. 초기에는 Prometheus로 지표를 수집했지만, 이 프로젝트에서는 장기 저장보다 경량 수집과 원격 저장 구조가 더 중요했습니다. 그래서 수집은 vmagent, 저장은 VictoriaMetrics로 분리해 Prometheus 단일 구성보다 훨씬 가볍게 구성할 수 있다고 판단했습니다. vmagent가 Prometheus 스크래핑 설정을 그대로 사용할 수 있어 기존 exporter 생태계를 그대로 유지할 수 있다는 점도 함께 고려했습니다.</p>
+      <p>모니터링 스택은 처음에 Prometheus로 구성했다가 VictoriaMetrics로 전환했습니다. 초기에는 Prometheus로 지표를 수집했지만, 이 프로젝트에서는 장기 저장보다 경량 수집과 원격 저장 구조가 더 중요하다고 판단했기에 수집은 vmagent, 저장은 VictoriaMetrics로 분리했습니다. vmagent가 Prometheus 스크래핑 설정을 그대로 사용할 수 있어 기존 exporter 생태계를 그대로 유지하면서 모니터링 구조를 단순화할 수 있다는 점도 함께 고려했습니다.</p>
     </div>
   </div>
 
@@ -178,11 +177,19 @@
     <div class="result-grid">
       <div class="result-card">
         <div class="result-num">2.06s → 33ms</div>
-        <div class="result-label">분산 배치 후<br>p95 응답 지연 단축</div>
+        <div class="result-label">p95 응답 지연 단축</div>
       </div>
       <div class="result-card">
-        <div class="result-num">손실 0</div>
-        <div class="result-label">브로커 강제 종료 시<br>메시지 손실</div>
+        <div class="result-num">78% → 68%</div>
+        <div class="result-label">피크 CPU 사용률</div>
+      </div>
+      <div class="result-card">
+        <div class="result-num">약 47% 완화</div>
+        <div class="result-label">최대 부하 컨테이너</div>
+      </div>
+      <div class="result-card">
+        <div class="result-num">메시지 손실 0</div>
+        <div class="result-label">브로커 장애 실험</div>
       </div>
     </div>
   </div>
@@ -195,7 +202,7 @@
   <div class="block">
     <p class="block-title">장애 내성 검증</p>
     <div class="block-text">
-      <p>부하 테스트 중 브로커 1대를 강제 종료해 장애 상황을 재현했습니다. 리더 재선출 과정과 ISR(In-Sync Replica) 변화를 실시간으로 관찰했고, 메시지 손실 없이 서비스가 지속됨을 확인했습니다. 테스트 전후 producer 발행 건수와 consumer 처리 완료 건수, DB 저장 건수를 비표해 누락 여부를 확인했습니다. 이 과정에서 acks=all, replication.factor=3, min.insync.replicas=2 설정이 실제로 어떻게 동작하는지 체감할 수 있었습니다.</p>
+      <p>부하 테스트 중 브로커 1대를 강제 종료해 장애 상황을 재현했습니다. 리더 재선출 과정과 ISR(In-Sync Replica) 변화를 실시간으로 관찰했고, 메시지 손실 없이 서비스가 지속됨을 확인했습니다. 테스트 전후 producer 발행 건수와 consumer 처리 완료 건수, DB 저장 건수를 비교해 누락 여부를 확인했습니다. 이 과정에서 acks=all, replication.factor=3, min.insync.replicas=2 설정이 실제로 어떻게 동작하는지 체감할 수 있었습니다.</p>
     </div>
   </div>
 
@@ -252,7 +259,7 @@
   <div class="block">
     <p class="block-title">아키텍처 설계 — 트레이드오프</p>
     <div class="block-text">
-      <p>Lambda는 Private Subnet 배치를 선택했습니다. 이 경우 Lambda가 SQS·SNS·DynamoDB 같은 AWS 관리형 서비스에 접근하려면 외부로 나가는 경로가 필요합니다.</p>
+      <p>Lambda는 Private Subnet 배치를 선택했습니다. 이 경우 Lambda가 SQS·SNS·DynamoDB 같은 AWS 관리형 서비스에 접근하기 위한 네트워크 경로가 필요합니다. NAT Gateway를 통한 아웃바운드 경로와 VPC Endpoint를 통한 사설 연결 방식을 비교했습니다.</p>
     </div>
     <div class="compare" style="margin-top:12px">
       <div class="compare-box">
@@ -297,7 +304,6 @@
     </div>
     <div class="block-text" style="margin-top:12px">
       <p>NAT Gateway는 AZ당 1개씩 2개를 구성하면 되지만 VPC Endpoint는 Interface Endpoint 6개, Gateway Endpoint 1개로 총 7개를 구성해야 해 복잡합니다. 하지만 NAT Gateway의 고정 비용과 데이터 처리 비용이 더 크게 작용하기 때문에 VPC Endpoing 구성으로 전환할 경우 약 36% 이상의 비용 절감이 가능합니다. 또한 해당 조건에서는 트래픽이 많을수록 절감 폭이 커집니다.</p>
-      <p>NAT Gateway는 AZ당 1개씩 2개를 구성하면 되지만 시간당 고정 비용과 데이터 처리 단가가 높습니다. VPC Endpoint는 Interface Endpoint 6개, Gateway Endpoint 1개로 총 7개를 구성해야 해 복잡하지만, 트래픽이 많을수록 NAT Gateway 대비 유리합니다.</p>
     </div>
   </div>
 
@@ -307,7 +313,7 @@
       <li>API Gateway → Lambda(예약 요청) → SQS FIFO → Lambda(예약 처리) → DynamoDB 비동기 파이프라인. Lambda 처리 실패 시 SQS 자동 재전달로 안정성 확보</li>
       <li>SQS FIFO에서 좌석 기준으로 메시지 그룹을 분리해 동일 좌석의 요청을 순차 처리</li>
       <li>Request ID + DynamoDB 조건부 업데이트로 재시도·중복 요청에도 멱등성 보장</li>
-      <li>SQS Batch Size 1→5 조절 및 Lambda Reserved Concurrency로 트래픽 급증 구간 대기시간 단축</li>
+      <li>SQS Batch Size 1→5 조절 및 앞단 Lambda에 Provisioned Concurrency 적용으로 Cold Start로 인한 초기 응답 지연 완화</li>
       <li>AWS CDK로 전체 인프라를 NetworkStack, ApplicationStack, DatabaseStack 등 6개 스택으로 분리해 IaC 구현</li>
       <li>CloudWatch Alarm과 SNS 이메일 구독으로 운영 알람 구성</li>
     </ul>
