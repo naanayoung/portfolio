@@ -208,15 +208,15 @@
 
   <!--K8s 확장-->
   <div class="block">
-    <p class="block-title">구현 확장 - Kubernetes 전환 및 CI/CD 구성</p>
+    <p class="block-title">구현 확장 - EKS 배포 및 CI/CD 구성</p>
     <ul class="plain">
-      <li>Docker Compose 기반 구성을 Kubernetes로 전환. Kafka 클러스터는 Strimzi Operator의 Custom Resource로 선언해 StatefulSet·Service·PVC 생성 자동화.</li>
-      <li>애플리케이션 코드는 수정하지 않고 서비스 간 통신 주소를 EC2 IP에서 Kubernetes Service DNS로 변경하고, 환경변수를 ConfigMap으로 분리. </li>
-      <li>GitHub Actions로 main 브랜치 push 시 Docker 이미지를 빌드해 GHCR에 push. 커밋 해시 기반 이미지 태그를 Kubernetes manifest에 반영하도록 구성.</li>
-      <li>kubectl apply와 rollout status 확인을 자동화해 코드 변경부터 컨테이너 이미지 갱신, Kubernetes 배포 반영까지 이어지는 배포 흐름 재현.</li>
+      <li>Docker Compose 기반 구성을 EKS로 전환. eksctl 명령으로 VPC, 서브넷, IAM 역할, EC2 워커 노드 2대가 포함된 Managed Node Group을 자동 구성. 
+      <li>Kafka 클러스터는 Strimzi Operator의 CR(Custom Resource)로 선언해 브로커 3대 배포. KafkaNodePool로 replicas를 관리하고, Strimzi가 StatefulSet·Service·PVC를 자동 생성.</li>
+      <li>애플리케이션 코드는 수정 없이 환경변수만 교체. 서비스 간 통신 주소를 EC2 IP에서 K8s Service DNS로 변경하고 ConfigMap으로 분리.</li>
+      <li>GitHub Actions로 CI/CD 파이프라인 구축. 코드 변경 시 이미지 빌드 → GHCR push → EKS 자동 배포까지 실행. </li>
     </ul>
     <div class="badge-row" style="margin-top:14px">
-      <span class="badge">Kubernetes</span><span class="badge">Strimzi</span><span class="badge">GitHub Actions</span><span class="badge">kubectl</span>
+      <span class="badge">Kubernetes</span><span class="badge">EKS</span><span class="badge">eksctl</span><span class="badge">Strimzi</span><span class="badge">GitHub Actions</span>
     </div>
   </div> 
 
