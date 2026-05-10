@@ -119,7 +119,7 @@
   <p class="section-sub">2025.05 – 2025.06 &nbsp;·&nbsp; 개인 프로젝트 &nbsp;·&nbsp; <a href="https://github.com/naanayoung/kafka-multi-broker" style="color:#2563eb;text-decoration:none;">GitHub</a></p>
 
   <div class="proj-summary">
-    지표 기반의 워크로드 분석으로 컨슈머·파티션 배치 불균형을 발견하고, 분산 배치를 통해 응답 지연을 단축했습니다. 브로커 장애 실험으로 메시지 손실 없는 서비스 지속 가능성을 검증하고, 이후 EKS 배포와 CI/CD 파이프라인 구축까지 확장했습니다.
+    지표 기반의 워크로드 분석으로 컨슈머·파티션 배치 불균형을 발견하고, 분산 배치를 통해 응답 지연을 2.06s에서 33.3ms로 단축했습니다. 브로커 장애 실험으로 메시지 손실 없는 서비스 지속 가능성을 검증하고, 이후 EKS 배포와 CI/CD 파이프라인 구축까지 확장했습니다.
   </div>
 
   <hr class="section-divider">
@@ -148,7 +148,7 @@
     <ul class="plain">
       <li>EC2 3대에 Docker Compose로 Kafka 멀티 브로커 클러스터 구축. 각 노드에 kafka-exporter, cAdvisor 배포</li>
       <li>vmagent가 각 노드의 지표를 수집해 VictoriaMetrics로 전달, Grafana에서 Lag·Latency·컨테이너 리소스를 단일 대시보드로 통합</li>
-      <li>쿠폰 발급 요청을 받은 Django API 서버가 Kafka에 메시지를 전송하고, 컨슈머 컨테이너 6개가 메시지 처리 구조 구성. 개선을 거쳐 최종적으로 EC2에 컨슈머 2개씩 분산 배치.</li>
+      <li>쿠폰 발급 요청을 받은 Django API 서버가 Kafka에 메시지를 전송하고, 컨슈머 컨테이너 6개가 각 EC2에 분산 배치되어 메시지 처리 흐름 재현</li>
       <li>k6로 5,000 / 10,000 / 15,000 / 18,000건 단계별 부하 테스트 진행. 싱글 브로커 → 멀티 브로커 전환 전후를 동일 조건(180초, 15,000건)에서 비교해 수치로 검증</li>
     </ul>
     <div class="badge-row" style="margin-top:14px">
@@ -180,14 +180,6 @@
         <div class="result-label">p95 응답 지연 단축</div>
       </div>
       <div class="result-card">
-        <div class="result-num">78% → 68%</div>
-        <div class="result-label">피크 CPU 사용률</div>
-      </div>
-      <div class="result-card">
-        <div class="result-num">약 47% 완화</div>
-        <div class="result-label">최대 부하 컨테이너</div>
-      </div>
-      <div class="result-card">
         <div class="result-num">메시지 손실 0</div>
         <div class="result-label">브로커 장애 실험</div>
       </div>
@@ -210,7 +202,7 @@
   <div class="block">
     <p class="block-title">구현 확장 - EKS 배포 및 CI/CD 구성</p>
     <ul class="plain">
-      <li>Docker Compose 기반 구성을 EKS로 전환. eksctl 명령으로 VPC, 서브넷, IAM 역할, EC2 워커 노드 2대가 포함된 Managed Node Group을 자동 구성. 
+      <li>Docker Compose 기반 구성을 EKS로 전환. eksctl 명령으로 VPC, 서브넷, IAM 역할, EC2 워커 노드 2대가 포함된 Managed Node Group을 자동 구성.</li>
       <li>Kafka 클러스터는 Strimzi Operator의 CR(Custom Resource)로 선언해 브로커 3대 배포. KafkaNodePool로 replicas를 관리하고, Strimzi가 StatefulSet·Service·PVC를 자동 생성.</li>
       <li>애플리케이션 코드는 수정 없이 환경변수만 교체. 서비스 간 통신 주소를 EC2 IP에서 K8s Service DNS로 변경하고 ConfigMap으로 분리.</li>
       <li>GitHub Actions로 CI/CD 파이프라인 구축. 코드 변경 시 이미지 빌드 → GHCR push → EKS 자동 배포까지 실행. </li>
@@ -303,7 +295,7 @@
       </div>
     </div>
     <div class="block-text" style="margin-top:12px">
-      <p>VPC Endpoint는 구성 복잡도가 높지만, 해당 조건에서 약 36%의 비용 절감 가능하며 낮은 데이터 처리 비용 덕에 트래픽이 클 수록 절감 폭이 커집니다.</p>
+      <p>VPC Endpoint는 구성 복잡도가 높지만, 해당 조건에서 약 36%의 비용 절감 가능하며 낮은 데이터 처리 비용 덕에 트래픽이 클수록 절감 폭이 커집니다.</p>
     </div>
   </div>
 
@@ -329,11 +321,11 @@
     <div class="insight">
       <div class="insight-item">
         <span class="insight-icon">→</span>
-        <p class="insight-text"><strong>네트워크 경로에 따른 비용 차이.</strong> 네트워크 설계 방식에 따라 비용 구조에 수십 퍼센트 차이를 만들 수 있다는 점을 확인했습니다.</p>
+        <p class="insight-text"><strong>네트워크 경로에 따른 비용 차이.</strong> 추가할 부분 </p>
       </div>
       <div class="insight-item">
         <span class="insight-icon">→</span>
-        <p class="insight-text"><strong>역할 기준의 IaC 분.</strong> 처음에는 CDK 스택을 기능 기준(예약 요청 / 예약 처리 / 취소)으로 나누어 구성해 시스템이 커질수록 스택 간 참조가 복잡해졌습니다. 이후 Network, Compute, Database와 같이 역할 기준으로 재구성해 더 명확하게 정리했습니다.</p>
+        <p class="insight-text"><strong>역할 기준의 IaC 분리.</strong> 처음에는 CDK 스택을 기능 기준(예약 요청 / 예약 처리 / 취소)으로 나누어 구성해 시스템이 커질수록 스택 간 참조가 복잡해졌습니다. 이후 Network, Compute, Database와 같이 역할 기준으로 재구성해 더 명확하게 정리했습니다.</p>
       </div>
     </div>
   </div>
